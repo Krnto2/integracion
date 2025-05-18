@@ -1,33 +1,28 @@
-import mysql.connector
+import sqlite3
 from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
 
 # Función para obtener datos desde la base de datos (Casa Matriz)
 def obtener_casa_matriz():
-    conexion = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",  # Cambia si tienes contraseña
-        database="inventario_db"
-    )
-    cursor = conexion.cursor(dictionary=True)
+    conexion = sqlite3.connect('inventario_db')
+    conexion.row_factory = sqlite3.Row
+    cursor = conexion.cursor()
     cursor.execute("SELECT cantidad, precio FROM casa_matriz LIMIT 1")
     resultado = cursor.fetchone()
     cursor.close()
     conexion.close()
-    return resultado
+
+    if resultado:
+        return {"cantidad": resultado["cantidad"], "precio": resultado["precio"]}
+    else:
+        return {"cantidad": 0, "precio": 0}
 
 # Función para actualizar el stock de la Casa Matriz
 def actualizar_casa_matriz(nueva_cantidad):
-    conexion = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="inventario_db"
-    )
+    conexion = sqlite3.connect('inventario_db')
     cursor = conexion.cursor()
-    cursor.execute("UPDATE casa_matriz SET cantidad = %s", (nueva_cantidad,))
+    cursor.execute("UPDATE casa_matriz SET cantidad = ? WHERE id = 1", (nueva_cantidad,))
     conexion.commit()
     cursor.close()
     conexion.close()
@@ -73,7 +68,6 @@ def vender():
 
     # Verificar si la venta es desde Casa Matriz
     if sucursal_id == "casa_matriz":
-        # Obtener datos desde BD
         casa_matriz = obtener_casa_matriz()
         if not casa_matriz:
             return jsonify({"error": "Casa Matriz no encontrada"}), 404

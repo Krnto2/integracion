@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     cargarInventario();
     document.getElementById('calcular').addEventListener('click', calcularTotal);
     document.getElementById('vender').addEventListener('click', realizarVenta);
@@ -23,34 +23,43 @@ function cargarInventario() {
 function mostrarInventario(data) {
     const sucursalesContainer = document.getElementById('sucursales-container');
     const casaMatrizContainer = document.getElementById('casa-matriz-container');
-    
+
     sucursalesContainer.innerHTML = '';
     casaMatrizContainer.innerHTML = '';
-    
+
     data.sucursales.forEach(sucursal => {
         const divSucursal = document.createElement('div');
         divSucursal.className = 'sucursal';
-        divSucursal.innerHTML = `${sucursal.nombre}<br>Cant: ${sucursal.cantidad} | Precio: ${sucursal.precio}`;
+        divSucursal.innerHTML = `
+            <strong>${sucursal.nombre}</strong><br>
+            Cant: ${sucursal.cantidad} | Precio: ${sucursal.precio}
+        `;
         sucursalesContainer.appendChild(divSucursal);
     });
-    
+
     const divCasaMatriz = document.createElement('div');
     divCasaMatriz.className = 'sucursal';
-    divCasaMatriz.innerHTML = `Casa Matriz<br>Cant: ${data.casa_matriz.cantidad} | Precio: ${data.casa_matriz.precio}`;
+    divCasaMatriz.innerHTML = `
+        <strong>Casa Matriz</strong><br>
+        Cant: ${data.casa_matriz.cantidad} | Precio: ${data.casa_matriz.precio}
+    `;
     casaMatrizContainer.appendChild(divCasaMatriz);
 }
 
 function filtrarSucursales() {
     const textoBusqueda = document.getElementById('buscar').value.toLowerCase();
     const sucursalesContainer = document.getElementById('sucursales-container');
-    
+
     sucursalesContainer.innerHTML = '';
-    
+
     inventario.sucursales.forEach(sucursal => {
         if (sucursal.nombre.toLowerCase().includes(textoBusqueda)) {
             const divSucursal = document.createElement('div');
             divSucursal.className = 'sucursal';
-            divSucursal.innerHTML = `${sucursal.nombre}<br>Cant: ${sucursal.cantidad} | Precio: ${sucursal.precio}`;
+            divSucursal.innerHTML = `
+                <strong>${sucursal.nombre}</strong><br>
+                Cant: ${sucursal.cantidad} | Precio: ${sucursal.precio}
+            `;
             sucursalesContainer.appendChild(divSucursal);
         }
     });
@@ -59,14 +68,14 @@ function filtrarSucursales() {
 function calcularTotal() {
     const sucursalId = document.getElementById('sucursal').value;
     const cantidad = parseInt(document.getElementById('cantidad').value);
-    
+
     if (!cantidad || isNaN(cantidad) || cantidad <= 0) {
         alert('Por favor ingrese una cantidad válida');
         return;
     }
 
     let precio = 0;
-    
+
     if (sucursalId === 'casa_matriz') {
         precio = inventario.casa_matriz.precio;
     } else {
@@ -75,22 +84,20 @@ function calcularTotal() {
             precio = sucursal.precio;
         }
     }
-    
+
     const total = precio * cantidad;
     document.getElementById('total').textContent = total;
-    
+
     fetch('/api/transformar_usd', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ precio_clp: total })
     })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('totalUSD').textContent = data.precio_usd;
-    })
-    .catch(error => console.error('Error al convertir a USD:', error));
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('totalUSD').textContent = data.precio_usd;
+        })
+        .catch(error => console.error('Error al convertir a USD:', error));
 }
 
 function realizarVenta() {
@@ -109,22 +116,20 @@ function realizarVenta() {
 
     fetch('/api/vender', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.error) });
-        }
-        return response.json();
-    })
-    .then(data => {
-        alert(data.mensaje);
-        cargarInventario(); // Actualizar
-    })
-    .catch(error => {
-        alert('Error: ' + error.message);
-    });
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.mensaje);
+            cargarInventario(); // Refrescar inventario en pantalla
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
 }
